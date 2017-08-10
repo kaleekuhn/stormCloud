@@ -29,16 +29,20 @@ int main(void)
     SET_BIT(PORTB, PIN_SWITCH);     // Enable switch pin's internal pullup
 
     uint16_t frame[NUM_LEDS] = {
-        0000, 0052, 0104, 0156, 0208,
-     0208, 0208, 0156, 0104, 0052, 0000     // flip middle row
-        0000, 052, 0104, 0156, 0208
+        000, 052, 104, 156, 208,
+      260, 208, 156, 104, 052, 000,     // flip middle row
+        000, 52, 104, 156, 208
     };
 
+    for(uint8_t spread=0; spread < NUM_LEDS; spread++){
+        frame[spread] = frame[spread]*3;
+    }
     uint8_t led_buffer[NUM_LEDS * 3];
 
-    for(;;)
-    {
-        _delay_ms(1);
+    for(;;){
+    
+        _delay_us(200);
+
 
         for(uint8_t cur_led = 0; cur_led < NUM_LEDS; cur_led++) {
 
@@ -91,7 +95,7 @@ int main(void)
 
         // Apply logarithmic gamma correction
         for(uint8_t i = 0; i < NUM_LEDS * 3; i++) {
-            led_buffer[i] = lookup(led_buffer[i]);
+            //led_buffer[i] = lookup(led_buffer[i]);
         }
 
         // Dump the color buffer to the strip
