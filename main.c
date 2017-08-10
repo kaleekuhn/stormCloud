@@ -11,6 +11,8 @@
 #define CLEAR_BIT(TGT, PIN)  do { TGT &= ~(1 << (PIN)); } while(0)
 #define TOGGLE_BIT(TGT, PIN) do { TGT ^= (1 << (PIN)); } while(0)
 
+#define NUM_LEDS    16
+
 #define PIN_LED     PB2
 #define PIN_SWITCH  PB3
 
@@ -26,44 +28,77 @@ int main(void)
     CLEAR_BIT(DDRB, PIN_SWITCH);    // Set switch pin as input
     SET_BIT(PORTB, PIN_SWITCH);     // Enable switch pin's internal pullup
 
-    uint16_t frame = 0;
+    uint16_t frame[NUM_LEDS] = {
+        0  , 0  , 0  , 0  , 0,
+      0  , 0  , 0  , 0  , 0,  0,
+        0  , 0  , 0  , 0  , 0,
+    };
+
+    uint8_t led_buffer[NUM_LEDS * 3];
 
     for(;;)
     {
         _delay_ms(1);
 
-        frame = (frame + 1) % (6*256);
+        for(uint8_t cur_led = 0; cur_led < NUM_LEDS; cur_led++) {
 
-        uint8_t inner_frame = frame % 256;
+            frame[cur_led] = (frame[cur_led] + 1) % (6*256);
 
-        switch(frame / 256) {
-            case GREEN_RISING:
-                // green goes up
-                showColor(255, inner_frame, 0);
-                break;
-            case RED_FALLING:
-                // red goes down
-                showColor(255 - inner_frame, 255, 0);		
-                break;
-            case BLUE_RISING:
-                // blue goes up
-                showColor(0, 255, inner_frame);
-                break;
-            case GREEN_FALLING:
-                // green goes down
-                showColor(0, 255 - inner_frame, 255);
-                break;
-            case RED_RISING:
-                // red goes up
-                showColor(inner_frame, 0, 255);
-                break;
-            case BLUE_FALLING:
-                // blue goes down
-                showColor(255, 0, 255 - inner_frame);
-                break;
-            default:
-                frame = 0;
-                break;
+            uint8_t inner_frame = frame[cur_led] % 256;
+
+            switch(frame[cur_led] / 256) {
+                case GREEN_RISING:
+                    // green goes up
+                    led_buffer[cur_led * 3 + 0] = 255;
+                    led_buffer[cur_led * 3 + 1] = inner_frame;
+                    led_buffer[cur_led * 3 + 2] = 0;
+                    break;
+                case RED_FALLING:
+                    // red goes down
+                    led_buffer[cur_led * 3 + 0] = 255 - inner_frame;
+                    led_buffer[cur_led * 3 + 1] = 255;
+                    led_buffer[cur_led * 3 + 2] = 0;
+                    break;
+                case BLUE_RISING:
+                    // blue goes up
+                    led_buffer[cur_led * 3 + 0] = 0;
+                    led_buffer[cur_led * 3 + 1] = 255;
+                    led_buffer[cur_led * 3 + 2] = inner_frame;
+                    break;
+                case GREEN_FALLING:
+                    // green goes down
+                    led_buffer[cur_led * 3 + 0] = 0;
+                    led_buffer[cur_led * 3 + 1] = 255 - inner_frame;
+                    led_buffer[cur_led * 3 + 2] = 255;
+                    break;
+                case RED_RISING:
+                    // red goes up
+                    led_buffer[cur_led * 3 + 0] = inner_frame;
+                    led_buffer[cur_led * 3 + 1] = 0;
+                    led_buffer[cur_led * 3 + 2] = 255;
+                    break;
+                case BLUE_FALLING:
+                    // blue goes down
+                    led_buffer[cur_led * 3 + 0] = 255;
+                    led_buffer[cur_led * 3 + 1] = 0;
+                    led_buffer[cur_led * 3 + 2] = 255 - inner_frame;
+                    break;
+                default:
+                    frame[cur_led] = 0;
+                    break;
+            }
         }
+
+        // Apply logarithmic gamma correction
+        for(uint8_t i = 0; i < NUM_LEDS * 3; i++) {
+            led_buffer[i] = lookup(led_buffer[i]);
+        }
+
+        // Dump the color buffer to the strip
+        for(uint8_t i = 0; i < NUM_LEDS; i++) {
+            sendPixel(led_buffer[i*3 + 0], led_buffer[i*3 + 1], led_buffer[i*3 + 2]);
+        }
+        show();
+        
     }
 }
