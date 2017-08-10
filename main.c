@@ -29,9 +29,9 @@ int main(void)
     SET_BIT(PORTB, PIN_SWITCH);     // Enable switch pin's internal pullup
 
     uint16_t frame[NUM_LEDS] = {
-        0  , 0  , 0  , 0  , 0,
-      0  , 0  , 0  , 0  , 0,  0,
-        0  , 0  , 0  , 0  , 0,
+        0000, 0052, 0104, 0156, 0208,
+     0208, 0208, 0156, 0104, 0052, 0000     // flip middle row
+        0000, 052, 0104, 0156, 0208
     };
 
     uint8_t led_buffer[NUM_LEDS * 3];
